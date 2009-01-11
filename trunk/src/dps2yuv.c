@@ -15,7 +15,6 @@ static AVFrame *pFrame;
 static AVFrame *pFrameA;
 static AVFrame *pFrameB;
 
-
 static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout, int shift)
 {
     int i, r1, r2, c1, c2;
@@ -37,17 +36,29 @@ static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout, int shift)
         if(1)
         {
             /* output frame */
-            for(i = 0; i<pCodecCtx->height; i++) /* Y */
+
+            if(shift)
+                fwrite(pFrameA->data[0], 1, pCodecCtx->width, fout);
+
+            for(i = 0; i<pCodecCtx->height - shift; i++) /* Y */
             {
                 fwrite(pFrameA->data[0] + pFrameA->linesize[0] * i, 1, pCodecCtx->width, fout);
                 fwrite(pFrameB->data[0] + pFrameB->linesize[0] * i, 1, pCodecCtx->width, fout);
             };
-            for(i = 0; i<pCodecCtx->height; i++) /* U */
+
+            if(shift)
+                fwrite(pFrameA->data[1], 1, pCodecCtx->width / 2, fout);
+
+            for(i = 0; i<pCodecCtx->height - shift; i++) /* U */
             {
                 fwrite(pFrameA->data[1] + pFrameA->linesize[1] * i, 1, pCodecCtx->width / 2, fout);
                 fwrite(pFrameB->data[1] + pFrameB->linesize[1] * i, 1, pCodecCtx->width / 2, fout);
             };
-            for(i = 0; i<pCodecCtx->height; i++) /* V */
+
+            if(shift)
+                fwrite(pFrameA->data[2], 1, pCodecCtx->width / 2, fout);
+
+            for(i = 0; i<pCodecCtx->height - shift; i++) /* V */
             {
                 fwrite(pFrameA->data[2] + pFrameA->linesize[2] * i, 1, pCodecCtx->width / 2, fout);
                 fwrite(pFrameB->data[2] + pFrameB->linesize[2] * i, 1, pCodecCtx->width / 2, fout);
