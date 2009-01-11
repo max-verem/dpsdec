@@ -60,7 +60,7 @@ static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout, int shift)
 
             if(shift)
             {
-                fwrite(pFrameB->data[1] + pFrameB->linesize[1] * ((pCodecCtx->height - 1)), 1, pCodecCtx->width / 2, fout);
+                fwrite(pFrameA->data[1] + pFrameA->linesize[1] * ((pCodecCtx->height - 1)), 1, pCodecCtx->width / 2, fout);
                 fwrite(pFrameA->data[2], 1, pCodecCtx->width / 2, fout);
             };
 
@@ -71,7 +71,7 @@ static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout, int shift)
             };
 
             if(shift)
-                fwrite(pFrameB->data[2] + pFrameB->linesize[2] * ((pCodecCtx->height - 1)), 1, pCodecCtx->width / 2, fout);
+                fwrite(pFrameA->data[2] + pFrameA->linesize[2] * ((pCodecCtx->height - 1)), 1, pCodecCtx->width / 2, fout);
         };
 
         /* free frames data */
