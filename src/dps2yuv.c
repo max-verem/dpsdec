@@ -7,6 +7,8 @@
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
+#include "svnversion.h"
+
 static AVCodec *pCodec;
 static AVCodecContext *pCodecCtx;
 static AVFrame *pFrame;
@@ -14,7 +16,7 @@ static AVFrame *pFrameA;
 static AVFrame *pFrameB;
 
 
-static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout)
+static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout, int shift)
 {
     int i, r1, r2, c1, c2;
     struct dps_frame *frame;
@@ -60,19 +62,77 @@ static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout)
     return 0;
 };
 
+static void usage()
+{
+    fprintf
+    (
+        stderr,
+        "Usage:\n"
+        "    dps2jpgs <input file> <pixel format> <field order> <output file>\n"
+        "Where:\n"
+        "    <input file>      - input DPS file name\n"
+        "    <pixel format>    - color space output, supported values: yuv422p,yuv420p,yuv411p\n"
+        "    <field order>     - output field ourder, supported value: U,L\n"
+        "    <output file>     - output file name or - for stdout\n\n"
+    );
+};
 
 int main(int argc, char** argv)
 {
-    int r, i;
+    int r, i, f;
+    int shift;
     struct dps_info dps;
     char dump_frame[1024];
-    FILE* fout = stdout;
+    FILE* fout;
+
+    /* output info */
+    fprintf(stderr, "dps2yuv-r" SVNVERSION " Copyright by Maksym Veremeyenko, 2009\n");
 
     /* check if filename is given */
-    if(3 != argc)
+    if(5 != argc)
     {
-        fprintf(stderr, "ERROR: no arguments supplied!\nUsage:\n\tdps2jpgs <src.dps> <output file>\n");
+        fprintf(stderr, "dps2yuv: ERROR! no arguments supplied!\n");
+        usage();
         return 1;
+    };
+
+    /* check colorspace */
+    if(0 != strcasecmp("yuv422p", argv[2]))
+    {
+        fprintf(stderr, "dps2yuv: ERROR! Pixel format [%s] not supported, (possible yet!)\n", argv[2]);
+        usage();
+        return 1;
+    };
+
+    /* check fields output order */
+    if(0 == strcasecmp("U", argv[3]))
+        f = 0;
+    else if (0 == strcasecmp("L", argv[3]))
+        f = 1;
+    else
+    {
+        fprintf(stderr, "dps2yuv: ERROR! Fields order not supported [%s] not supported\n", argv[3]);
+        usage();
+        return 1;
+    };
+
+    /* register all avliv */
+    av_register_all();
+
+    /* Find the decoder for the video frame */
+    pCodec = avcodec_find_decoder(CODEC_ID_MJPEG);
+    if(NULL == pCodec)
+    {
+        fprintf(stderr, "dps2yuv: ERROR! Unsupported codec! for '%s'\n", "CODEC_ID_MJPEG");
+        return 2;
+    };
+
+    /* Open codec */
+    pCodecCtx = avcodec_alloc_context();
+    if(avcodec_open(pCodecCtx, pCodec) < 0)
+    {
+        fprintf(stderr, "dps2yuv: ERROR! Could not open codec for '%s'\n", "CODEC_ID_MJPEG");
+        return 2;
     };
 
     /* try to read dps file */
@@ -81,47 +141,40 @@ int main(int argc, char** argv)
     /* check results */
     if(0 == r)
     {
-        /* register all avliv */
-        av_register_all();
+        /* open output file */
+        if(0 != strcasecmp("-", argv[4]))
+            fout = fopen(argv[4], "wb");
+        else
+            fout = stdout;
 
-        /* Find the decoder for the video frame */
-        pCodec = avcodec_find_decoder(CODEC_ID_MJPEG);
-        if(NULL == pCodec)
+        if(NULL == fout)
         {
-            fprintf(stderr, "ERROR: Unsupported codec! for '%s'", "CODEC_ID_MJPEG");
-            return -EINVAL;
-        };
-
-        /* Open codec */
-        pCodecCtx = avcodec_alloc_context();
-        if(avcodec_open(pCodecCtx, pCodec) < 0)
+            r = errno;
+            fprintf(stderr, "dps2yuv: ERROR! fopen(%s) failed with r=%d [%s]\n", argv[4], r, strerror(r));
+        }
+        else
         {
-            fprintf(stderr, "ERROR: Could not open codec for '%s'", "CODEC_ID_MJPEG");
-            return -EINVAL;
+            /* Allocate video frame */
+            pFrameA = avcodec_alloc_frame();
+            pFrameB = avcodec_alloc_frame();
+            pFrame = avcodec_alloc_frame();
+
+            /* do all frames */
+            for(i = 0; i < dps.frames_count; i++)
+                yuv_frame(&dps, i, fout, /* we assume input is UFF */ f);
+
+            /* free frame */
+            av_free(pFrame);
+            av_free(pFrameA);
+            av_free(pFrameB);
+
+            /* close output file */
+            fclose(fout);
         };
-
-
-        /* Allocate video frame */
-        pFrameA = avcodec_alloc_frame();
-        pFrameB = avcodec_alloc_frame();
-        pFrame = avcodec_alloc_frame();
-
-        /* do all frames */
-        for(i = 0; i < dps.frames_count; i++)
-            yuv_frame(&dps, i, fout);
-
-        r = 0;
-
-        /* free frame */
-        av_free(pFrame);
-        av_free(pFrameA);
-        av_free(pFrameB);
-
-        r = 0;
     }
     else
     {
-        fprintf(stderr, "ERROR, dps_open(%s) failed with r=%d [%s]\n", argv[1], r, strerror(-r));
+        fprintf(stderr, "dps2yuv: ERROR! dps_open(%s) failed with r=%d [%s]\n", argv[1], r, strerror(-r));
         r = -r;
     };
 
