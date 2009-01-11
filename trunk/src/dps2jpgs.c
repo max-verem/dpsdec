@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "dps_io.h"
 
+#include "svnversion.h"
+
 static int frame2file(struct dps_info* dps, size_t num, char* filename)
 {
     int r;
@@ -33,19 +35,35 @@ static int frame2file(struct dps_info* dps, size_t num, char* filename)
     return r;
 };
 
+static void usage()
+{
+    fprintf
+    (
+        stderr,
+        "Usage:\n"
+        "    dps2jpgs <src.dps> <dst_seq_prefix>\n"
+        "Where:\n"
+        "    <src.dps>         - input DPS file\n"
+        "    <dst_seq_prefix>  - output sequence prefix, i.e. /tmp/test_seq_ number and extension will be added automaticaly\n"
+    );
+};
+
 int main(int argc, char** argv)
 {
     int r, i;
     struct dps_info dps;
     char dump_frame[1024];
 
+    /* output info */
+    fprintf(stderr, "dps2jpgs-r" SVNVERSION " Copyright by Maksym Veremeyenko, 2009\n");
+
     /* check if filename is given */
     if(3 != argc)
     {
-        fprintf(stderr, "ERROR: no arguments supplied!\nUsage:\n\tdps2jpgs <src.dps> <dst_seq_prefix>\n");
+        fprintf(stderr, "dps2jpgs: ERROR! no arguments supplied!\n");
+        usage();
         return 1;
     };
-
 
     /* try to read dps file */
     r = dps_open(&dps, argv[1]);
@@ -54,7 +72,7 @@ int main(int argc, char** argv)
     if(0 == r)
     {
         /* dump usefull info */
-        printf("Frames count: %d\n", dps.frames_count);
+        fprintf(stderr, "dps2jpgs: Frames count: %d\n", dps.frames_count);
 
         for(i = 0; i < dps.frames_count; i++)
         {
@@ -75,7 +93,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        fprintf(stderr, "ERROR, dps_open(%s) failed with r=%d [%s]\n", argv[1], r, strerror(-r));
+        fprintf(stderr, "dps2jpgs: ERROR! dps_open(%s) failed with r=%d [%s]\n", argv[1], r, strerror(-r));
         r = -r;
     };
 
