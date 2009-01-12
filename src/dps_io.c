@@ -21,7 +21,7 @@ int dps_open(struct dps_info* dps, char* filename)
     /* open file */
     dps->res = fopen(filename, "rb");
     if(NULL == dps->res)
-        return -errno;  
+        return -errno;
 
     /* read signature */
     fseek(dps->res, 0L, SEEK_SET);
@@ -32,7 +32,7 @@ int dps_open(struct dps_info* dps, char* filename)
         return -EMEDIUMTYPE;
 
     /* read frames number */
-    dps->frames_count = 0L; 
+    dps->frames_count = 0L;
     fseek(dps->res, DPS_FRAMES_POS, SEEK_SET);
     fread(&dps->frames_count, 1, 4, dps->res);
 
