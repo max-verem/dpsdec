@@ -24,7 +24,7 @@ struct dps_info
     size_t frames_count;
 
     /** index data: file offsets of frames/fields data */
-    size_t* frames_pos;
+    off_t* frames_pos;
 
     /** index data: sizes of frame/fields data */
     int32_t* frames_size;
