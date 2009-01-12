@@ -161,6 +161,16 @@ int main(int argc, char** argv)
     /* check results */
     if(0 == r)
     {
+        /* output info */
+        fprintf
+        (
+            stderr,
+            "dps2yuv: INFO: frames: %d\n"
+            "dps2yuv: INFO: size: %dx%d\n",
+            dps.frames_count,
+            dps.width, dps.height
+        );
+
         /* open output file */
         if(0 != strcasecmp("-", argv[4]))
             fout = fopen(argv[4], "wb");
