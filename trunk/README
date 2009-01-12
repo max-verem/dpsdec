@@ -1,0 +1,40 @@
+
+Execution examples
+==================
+
+Extract images - create jpegs sequence from DPS file:
+
+[np@np-6 dpsdec]$ ./dps2jpgs testdata/test_8.dps testdata/dump_test_8.dps_
+[np@np-6 dpsdec]$ ls -als testdata/dump_test_8.dps_*
+128 -rw-rw-r-- 1 np np 126464 січ 11 19:46 testdata/dump_test_8.dps_0000A.jpg
+132 -rw-rw-r-- 1 np np 128000 січ 11 19:46 testdata/dump_test_8.dps_0000B.jpg
+[...]
+128 -rw-rw-r-- 1 np np 123904 січ 11 19:46 testdata/dump_test_8.dps_0007A.jpg
+128 -rw-rw-r-- 1 np np 125440 січ 11 19:46 testdata/dump_test_8.dps_0007B.jpg
+[np@np-6 dpsdec]$
+
+
+
+Converting DPS file to DV AVI:
+
+[np@np-6 dpsdec]$ 
+[np@np-6 dpsdec]$ ./dps2yuv testdata/video_for_max.dps yuv422p L - | ffmpeg -s 720x576 -pix_fmt yuv422p -f rawvideo -i - -pix_fmt yuv420p -vcodec dvvideo -vtag dvsd -y testdata/video_for_max.avi
+dps2yuv-r6 Copyright by Maksym Veremeyenko, 2009
+FFmpeg version SVN-r14918, Copyright (c) 2000-2008 Fabrice Bellard, et al.
+  configuration: --prefix=/home/np/local/ffmpeg --enable-shared --enable-gpl --enable-postproc --enable-swscale --enable-pthreads
+  libavutil     49.10. 0 / 49.10. 0
+  libavcodec    51.69. 0 / 51.69. 0
+  libavformat   52.20. 0 / 52.20. 0
+  libavdevice   52. 1. 0 / 52. 1. 0
+  built on Sep  1 2008 06:35:25, gcc: 4.1.1 20061011 (Red Hat 4.1.1-30)
+Input #0, rawvideo, from 'pipe:':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+    Stream #0.0: Video: rawvideo, yuv422p, 720x576, 25.00 tb(r)
+Output #0, avi, to 'testdata/video_for_max.avi':
+    Stream #0.0: Video: dvvideo, yuv420p, 720x576, q=2-31, 200 kb/s, 25.00 tb(c)
+Stream mapping:
+  Stream #0.0 -> #0.0
+frame=  367 fps= 34 q=0.0 Lsize=   51624kB time=14.68 bitrate=28807.9kbits/s    
+video:51609kB audio:0kB global headers:0kB muxing overhead 0.027414%
+[np@np-6 dpsdec]$ 
+
