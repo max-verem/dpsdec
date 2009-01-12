@@ -1,4 +1,16 @@
 
+DPS file hexdumping
+===================
+
+Ouput HEX dump of file:
+
+[np@np-6 testdata]$ od -t x1 --width=16 -A x test_11.dps > test_11.dps.dump
+
+Output decimal start of jpegs:
+
+[verem@elbrus dps]$ od -t x1 --width=4 -A d test_8.dps | grep "ff d8 ff e0" | awk '{ print $1};'
+
+
 Execution examples
 ==================
 

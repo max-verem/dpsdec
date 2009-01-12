@@ -1,4 +1,4 @@
-DEBUG=-g3 -ggdb3 -D_DEBUG_
+#DEBUG=-g3 -ggdb3 -D_DEBUG_
 
 TARGETS=dps2jpgs dps2yuv
 
