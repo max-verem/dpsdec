@@ -6,6 +6,7 @@
 #include "dps_io.h"
 
 #define DPS_SIGN        0x30535044     /* 44 50 53 30 */
+#define DPS_DIM_POS     0x00000130
 #define DPS_FRAMES_POS  0x00000140
 #define DPS_INDEX_POS   0x00000158
 #define DPS_BLOCK_SIZE  512
@@ -31,10 +32,14 @@ int dps_open(struct dps_info* dps, char* filename)
     if(DPS_SIGN != signature)
         return -EMEDIUMTYPE;
 
+    /* read frame dimentions */
+    fseek(dps->res, DPS_DIM_POS, SEEK_SET);
+    fread(&dps->width, 1, sizeof(int16_t), dps->res);
+    fread(&dps->height, 1, sizeof(int16_t), dps->res);
+
     /* read frames number */
-    dps->frames_count = 0L;
     fseek(dps->res, DPS_FRAMES_POS, SEEK_SET);
-    fread(&dps->frames_count, 1, 4, dps->res);
+    fread(&dps->frames_count, 1, sizeof(int32_t), dps->res);
 
     /* assume there are 2 fields */
     dps->fields_count = 2;

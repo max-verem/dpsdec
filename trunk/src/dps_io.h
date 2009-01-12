@@ -28,6 +28,9 @@ struct dps_info
 
     /** index data: sizes of frame/fields data */
     int32_t* frames_size;
+
+    /** picture width / height */
+    int16_t width, height;
 };
 /** @} */
 
