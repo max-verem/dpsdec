@@ -4,6 +4,8 @@
 
 #include "svnversion.h"
 
+#define NUM_SUFF "%s%.06d"
+
 static int frame2file(struct dps_info* dps, size_t num, char* filename)
 {
     int r;
@@ -41,7 +43,7 @@ static void usage()
     (
         stderr,
         "Usage:\n"
-        "    dps2jpgs <src.dps> <dst_seq_prefix>\n"
+        "    dps2jpgs <src.dps> <dst_seq_prefix> [<start frame> <count>]\n"
         "Where:\n"
         "    <src.dps>         - input DPS file\n"
         "    <dst_seq_prefix>  - output sequence prefix, i.e. /tmp/test_seq_ number and extension will be added automaticaly\n"
@@ -50,7 +52,7 @@ static void usage()
 
 int main(int argc, char** argv)
 {
-    int r, i;
+    int r, i, c;
     struct dps_info dps;
     char dump_frame[1024];
 
@@ -58,7 +60,7 @@ int main(int argc, char** argv)
     fprintf(stderr, "dps2jpgs-r" SVNVERSION " Copyright by Maksym Veremeyenko, 2009\n");
 
     /* check if filename is given */
-    if(3 != argc)
+    if((3 != argc) && (5 != argc))
     {
         fprintf(stderr, "dps2jpgs: ERROR! no arguments supplied!\n");
         usage();
@@ -74,17 +76,29 @@ int main(int argc, char** argv)
         /* dump usefull info */
         fprintf(stderr, "dps2jpgs: Frames count: %d\n", dps.frames_count);
 
-        for(i = 0; i < dps.frames_count; i++)
+        /* setup frames range */
+        if(5 == argc)
+        {
+            i = atol(argv[3]);
+            c = atol(argv[4]);
+        }
+        else
+        {
+            i = 0;
+            c = dps.frames_count;
+        };
+
+        for(c = i + c; i < c; i++)
         {
             /* interlaces? two fields data per on logical frame */
             if(1)
             {
                 /* dump field A */
-                sprintf(dump_frame, "%s%.04dA.jpg", argv[2], i);
+                sprintf(dump_frame, NUM_SUFF "A.jpg", argv[2], i);
                 frame2file(&dps, 2*i + 0, dump_frame);
 
                 /* dump field B */
-                sprintf(dump_frame, "%s%.04dB.jpg", argv[2], i);
+                sprintf(dump_frame, NUM_SUFF "B.jpg", argv[2], i);
                 frame2file(&dps, 2*i + 1, dump_frame);
             };
         };
