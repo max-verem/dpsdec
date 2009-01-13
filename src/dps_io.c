@@ -63,7 +63,7 @@ int dps_open(struct dps_info* dps, char* filename)
         return -errno;
 
     /* read signature */
-    fseek(dps->res, 0L, SEEK_SET);
+    fseeko(dps->res, 0L, SEEK_SET);
     fread(&signature, 1, 4, dps->res);
 
     /* check signature */
@@ -71,7 +71,7 @@ int dps_open(struct dps_info* dps, char* filename)
         return -EMEDIUMTYPE;
 
     /* seek to data start */
-    fseek(dps->res, DPS_DATA_POS, SEEK_SET);
+    fseeko(dps->res, DPS_DATA_POS, SEEK_SET);
 
     /* allocate chunk space */
     chunk_body = (char*)malloc(DPS_CHUNK_MAX_SIZE);
@@ -131,7 +131,7 @@ int dps_open(struct dps_info* dps, char* filename)
                                 break;
                             case 0x01:                  /* audio (1) */
                                 /* ignore that data */
-                                fseek(dps->res, s & DPS_CHUNK_ATTACH_SIZE, SEEK_CUR);
+                                fseeko(dps->res, s & DPS_CHUNK_ATTACH_SIZE, SEEK_CUR);
                                 break;
                             default:                    /* error data */
                                 r = -3;
@@ -220,7 +220,7 @@ struct dps_frame* dps_frame_read(struct dps_info* dps, size_t num)
 #endif /* _DEBUG_ */
 
     /* seek */
-    fseek(dps->res, dps->frames_pos[num], SEEK_SET);
+    fseeko(dps->res, dps->frames_pos[num], SEEK_SET);
 
     /* read */
     fread(frame->data, 1, frame->size, dps->res);
