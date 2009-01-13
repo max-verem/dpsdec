@@ -1,9 +1,10 @@
 #DEBUG=-g3 -ggdb3 -D_DEBUG_
 
-TARGETS=dps2jpgs dps2yuv
+TARGETS=dps2jpgs dps2yuv dps2yuv_m
 
 OBJS_DPS2JPEGS=dps_io.o dps2jpgs.o
 OBJS_DPS2YUV=dps_io.o dps2yuv.o
+OBJS_DPS2YUV_M=dps_io.o dps2yuv_m.o
 
 FFMPEG_CFLAGS=$(shell pkg-config --cflags libavformat) $(shell pkg-config --cflags libavcodec) $(shell pkg-config --cflags libswscale)
 FFMPEG_LDFLAGS=$(shell pkg-config --libs libavformat) $(shell pkg-config --libs libavcodec) $(shell pkg-config --libs libswscale)
@@ -22,6 +23,9 @@ dps2jpgs: $(OBJS_DPS2JPEGS)
 dps2yuv: $(OBJS_DPS2YUV)
 	$(CC) -o $@ $(OBJS_DPS2YUV) $(LDFLAGS)
 
+dps2yuv_m: $(OBJS_DPS2YUV_M)
+	$(CC) -o $@ $(OBJS_DPS2YUV_M) $(LDFLAGS) -lpthread
+
 dps_io.o: src/dps_io.c src/dps_io.h
 	$(CC) -c -o $@ src/dps_io.c $(CFLAGS)
 
@@ -30,6 +34,9 @@ dps2jpgs.o: src/dps2jpgs.c src/dps_io.h svnversion.h
 
 dps2yuv.o: src/dps2yuv.c src/dps_io.h svnversion.h
 	$(CC) -c -o $@ src/dps2yuv.c $(CFLAGS)
+
+dps2yuv_m.o: src/dps2yuv_m.c src/dps_io.h svnversion.h
+	$(CC) -c -o $@ src/dps2yuv_m.c $(CFLAGS)
 
 svnversion.h:
 	echo -e "#ifndef SVNVERSION_H\n#define SVNVERSION_H\n#define SVNVERSION \""`svnversion -nc . | sed -e s/^[^:]*://`"\"\n#endif\n" > svnversion.h
