@@ -17,6 +17,7 @@ static AVFrame *pFrameB;
 
 static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout, int shift)
 {
+    int r = 0;
     int i, r1, r2, c1, c2;
     struct dps_frame *frame;
     struct dps_frame *frameA;
@@ -33,7 +34,19 @@ static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout, int shift)
         r1 = avcodec_decode_video(pCodecCtx, pFrameA, &c1, frameA->data, frameA->size);
         r2 = avcodec_decode_video(pCodecCtx, pFrameB, &c2, frameB->data, frameB->size);
 
-        if(1)
+        /* check error condition */
+        if((r1 <= 0) || (r2 <= 0))
+        {
+            r = -1;
+            if(r1 <= 0)
+                fprintf(stderr, "dps2yuv: ERROR! avcodec_decode_video(%d) failed, r=%d, l=%d\n", num * 2, r1, c1);
+            if(r2 <= 0)
+                fprintf(stderr, "dps2yuv: ERROR! avcodec_decode_video(%d) failed, r=%d, l=%d\n", num * 2 + 1, r2, c2);
+        }
+        else
+            r = 0;
+
+        if(0 == r)
         {
             /* output frame */
 
@@ -79,7 +92,7 @@ static int yuv_frame(struct dps_info* dps, size_t num, FILE* fout, int shift)
         dps_frame_release(frameB);
     };
 
-    return 0;
+    return r;
 };
 
 static void usage()
