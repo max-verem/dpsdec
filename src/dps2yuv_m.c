@@ -1,3 +1,5 @@
+#define PROGRAM "dps2yuv_m"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -10,6 +12,8 @@
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
+
+#include "dps2yuv_out_pframes.h"
 
 #include "svnversion.h"
 
@@ -51,49 +55,6 @@ struct dps2yuv_instance
     pthread_cond_t trig_writer;
     pthread_t thread_reader;
     pthread_t thread_writer;
-};
-
-static void out_pframes(AVFrame *pFrameA, AVFrame *pFrameB, int width, int height, int shift, FILE* fout)
-{
-    int i;
-
-    /* output frame */
-
-    if(shift)
-        fwrite(pFrameA->data[0], 1, width, fout);
-
-    for(i = 0; i< (height - shift); i++) /* Y */
-    {
-        fwrite(pFrameA->data[0] + pFrameA->linesize[0] * i, 1, width, fout);
-        fwrite(pFrameB->data[0] + pFrameB->linesize[0] * i, 1, width, fout);
-    };
-
-    if(shift)
-    {
-        fwrite(pFrameA->data[0] + pFrameA->linesize[0] * (height - 1), 1, width, fout);
-        fwrite(pFrameA->data[1], 1, width / 2, fout);
-    };
-
-    for(i = 0; i < (height - shift); i++) /* U */
-    {
-        fwrite(pFrameA->data[1] + pFrameA->linesize[1] * i, 1, width / 2, fout);
-        fwrite(pFrameB->data[1] + pFrameB->linesize[1] * i, 1, width / 2, fout);
-    };
-
-    if(shift)
-    {
-        fwrite(pFrameA->data[1] + pFrameA->linesize[1] * (height - 1), 1, width / 2, fout);
-        fwrite(pFrameA->data[2], 1, width / 2, fout);
-    };
-
-    for(i = 0; i< (height - shift); i++) /* V */
-    {
-        fwrite(pFrameA->data[2] + pFrameA->linesize[2] * i, 1, width / 2, fout);
-        fwrite(pFrameB->data[2] + pFrameB->linesize[2] * i, 1, width / 2, fout);
-    };
-
-    if(shift)
-        fwrite(pFrameA->data[2] + pFrameA->linesize[2] * (height - 1), 1, width / 2, fout);
 };
 
 static int get_empty_cell(struct dps2yuv_instance* desc, int flag, int num)
@@ -139,7 +100,7 @@ static void* frames_pipe_reader(void* p)
         if(-1 != j)
         {
 #ifdef _DEBUG_
-            fprintf(stderr, "dps2yuv_m(frames_pipe_reader): START #%3d [%d]\n", i, j);
+            fprintf(stderr, PROGRAM "_m(frames_pipe_reader): START #%3d [%d]\n", i, j);
 #endif /* _DEBUG_ */
 
             /* read frames */
@@ -153,7 +114,7 @@ static void* frames_pipe_reader(void* p)
             desc->frames_pipe[j].is_present = CELL_JPEG_PRESENT;
 
 #ifdef _DEBUG_
-            fprintf(stderr, "dps2yuv_m(frames_pipe_reader): DONE  #%3d [%d]\n", i, j);
+            fprintf(stderr, PROGRAM "_m(frames_pipe_reader): DONE  #%3d [%d]\n", i, j);
 #endif /* _DEBUG_ */
 
             /* start encoding */
@@ -198,7 +159,7 @@ static void* frames_pipe_writer(void* p)
         pthread_mutex_unlock(&desc->lock);
 
 #ifdef _DEBUG_
-        fprintf(stderr, "dps2yuv_m(frames_pipe_writer): START #%d [%d]\n", i, j);
+        fprintf(stderr, PROGRAM "_m(frames_pipe_writer): START #%d [%d]\n", i, j);
 #endif /* _DEBUG_ */
 
         /* start writes */
@@ -227,7 +188,7 @@ static void* frames_pipe_writer(void* p)
             desc->frames_pipe[j].is_present = 0;
 
 #ifdef _DEBUG_
-            fprintf(stderr, "dps2yuv_m(frames_pipe_writer): DONE  #%d [%d]\n", i, j);
+            fprintf(stderr, PROGRAM "_m(frames_pipe_writer): DONE  #%d [%d]\n", i, j);
 #endif /* _DEBUG_ */
 
             /* start encoding */
@@ -263,7 +224,7 @@ static void* frames_pipe_decoder(void* p)
     pthread_mutex_unlock(&avlock);
     if(NULL == pCodec)
     {
-        fprintf(stderr, "dps2yuv: ERROR! Unsupported codec! for '%s'\n", "CODEC_ID_MJPEG");
+        fprintf(stderr, PROGRAM ": ERROR! Unsupported codec! for '%s'\n", "CODEC_ID_MJPEG");
         return NULL;
     };
 
@@ -274,12 +235,12 @@ static void* frames_pipe_decoder(void* p)
     pthread_mutex_unlock(&avlock);
     if(r < 0)
     {
-        fprintf(stderr, "dps2yuv: ERROR! Could not open codec for '%s'\n", "CODEC_ID_MJPEG");
+        fprintf(stderr, PROGRAM ": ERROR! Could not open codec for '%s'\n", "CODEC_ID_MJPEG");
         return NULL;
     };
 
 #ifdef _DEBUG_
-    fprintf(stderr, "dps2yuv_m(frames_pipe_decoder[%d]): started\n", cell->id);
+    fprintf(stderr, PROGRAM "_m(frames_pipe_decoder[%d]): started\n", cell->id);
 #endif /* _DEBUG_ */
 
     while(0 == desc->f_exit)
@@ -288,7 +249,7 @@ static void* frames_pipe_decoder(void* p)
         pthread_mutex_lock(&desc->lock);
 
 #ifdef _DEBUG_
-        fprintf(stderr, "dps2yuv_m(frames_pipe_decoder[%d]): pthread_cond_wait\n", cell->id);
+        fprintf(stderr, PROGRAM "_m(frames_pipe_decoder[%d]): pthread_cond_wait\n", cell->id);
 #endif /* _DEBUG_ */
 
         if(cell->is_present != CELL_JPEG_PRESENT)
@@ -299,7 +260,7 @@ static void* frames_pipe_decoder(void* p)
         pthread_mutex_unlock(&desc->lock);
 
 #ifdef _DEBUG_
-        fprintf(stderr, "dps2yuv_m(frames_pipe_decoder[%d]): #%d, is_present=%d\n", cell->id, cell->num, cell->is_present);
+        fprintf(stderr, PROGRAM "_m(frames_pipe_decoder[%d]): #%d, is_present=%d\n", cell->id, cell->num, cell->is_present);
 #endif /* _DEBUG_ */
 
         /* check for exit status */
@@ -323,7 +284,7 @@ static void* frames_pipe_decoder(void* p)
             cell->is_present |= CELL_YUV_PRESENT;
 
 #ifdef _DEBUG_
-            fprintf(stderr, "dps2yuv_m(frames_pipe_decoder[%d]): #%d, DONE\n", cell->id, cell->num);
+            fprintf(stderr, PROGRAM "_m(frames_pipe_decoder[%d]): #%d, DONE\n", cell->id, cell->num);
 #endif /* _DEBUG_ */
 
             /* start writer */
@@ -362,7 +323,7 @@ static void sighandler (int sig)
     instance.f_exit = 1;
 
     /* notify */
-    fprintf(stderr, "dps2yuv: Interrupts signal catched!\n");
+    fprintf(stderr, PROGRAM ": Interrupts signal catched!\n");
 
     /* lock mutex */
     pthread_mutex_lock(&instance.lock);
@@ -393,12 +354,12 @@ int main(int argc, char** argv)
     void* p;
 
     /* output info */
-    fprintf(stderr, "dps2yuv-r" SVNVERSION " Copyright by Maksym Veremeyenko, 2009\n");
+    fprintf(stderr, PROGRAM "-r" SVNVERSION " Copyright by Maksym Veremeyenko, 2009\n");
 
     /* check if filename is given */
     if(5 != argc)
     {
-        fprintf(stderr, "dps2yuv: ERROR! no arguments supplied!\n");
+        fprintf(stderr, PROGRAM ": ERROR! no arguments supplied!\n");
         usage();
         return 1;
     };
@@ -406,7 +367,7 @@ int main(int argc, char** argv)
     /* check colorspace */
     if(0 != strcasecmp("yuv422p", argv[2]))
     {
-        fprintf(stderr, "dps2yuv: ERROR! Pixel format [%s] not supported, (possible yet!)\n", argv[2]);
+        fprintf(stderr, PROGRAM ": ERROR! Pixel format [%s] not supported, (possible yet!)\n", argv[2]);
         usage();
         return 1;
     };
@@ -418,7 +379,7 @@ int main(int argc, char** argv)
         instance.shift = 1;
     else
     {
-        fprintf(stderr, "dps2yuv: ERROR! Fields order not supported [%s] not supported\n", argv[3]);
+        fprintf(stderr, PROGRAM ": ERROR! Fields order not supported [%s] not supported\n", argv[3]);
         usage();
         return 1;
     };
@@ -436,8 +397,8 @@ int main(int argc, char** argv)
         fprintf
         (
             stderr,
-            "dps2yuv: INFO: frames: %d\n"
-            "dps2yuv: INFO: size: %dx%d\n",
+            PROGRAM ": INFO: frames: %d\n"
+            PROGRAM ": INFO: size: %dx%d\n",
             instance.dps.frames_count,
             instance.dps.width, instance.dps.height
         );
@@ -451,7 +412,7 @@ int main(int argc, char** argv)
         if(NULL == instance.fout)
         {
             r = errno;
-            fprintf(stderr, "dps2yuv: ERROR! fopen(%s) failed with r=%d [%s]\n", argv[4], r, strerror(r));
+            fprintf(stderr, PROGRAM ": ERROR! fopen(%s) failed with r=%d [%s]\n", argv[4], r, strerror(r));
         }
         else
         {
@@ -520,7 +481,7 @@ int main(int argc, char** argv)
             pthread_join(instance.thread_writer, &p);
 
 #ifdef _DEBUG_
-            fprintf(stderr, "dps2yuv_m(main): exiting, waiting for decoders\n");
+            fprintf(stderr, PROGRAM "_m(main): exiting, waiting for decoders\n");
 #endif /* _DEBUG_ */
 
             instance.f_exit = 1;
@@ -555,7 +516,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        fprintf(stderr, "dps2yuv: ERROR! dps_open(%s) failed with r=%d [%s]\n", argv[1], r, strerror(-r));
+        fprintf(stderr, PROGRAM ": ERROR! dps_open(%s) failed with r=%d [%s]\n", argv[1], r, strerror(-r));
         r = -r;
     };
 

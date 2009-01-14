@@ -32,10 +32,10 @@ dps_io.o: src/dps_io.c src/dps_io.h
 dps2jpgs.o: src/dps2jpgs.c src/dps_io.h svnversion.h
 	$(CC) -c -o $@ src/dps2jpgs.c $(CFLAGS)
 
-dps2yuv.o: src/dps2yuv.c src/dps_io.h svnversion.h
+dps2yuv.o: src/dps2yuv.c src/dps_io.h svnversion.h src/dps2yuv_out_pframes.h
 	$(CC) -c -o $@ src/dps2yuv.c $(CFLAGS)
 
-dps2yuv_m.o: src/dps2yuv_m.c src/dps_io.h svnversion.h
+dps2yuv_m.o: src/dps2yuv_m.c src/dps_io.h svnversion.h src/dps2yuv_out_pframes.h
 	$(CC) -c -o $@ src/dps2yuv_m.c $(CFLAGS)
 
 svnversion.h:

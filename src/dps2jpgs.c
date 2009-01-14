@@ -1,3 +1,5 @@
+#define PROGRAM "dps2jpgs"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "dps_io.h"
@@ -57,12 +59,12 @@ int main(int argc, char** argv)
     char dump_frame[1024];
 
     /* output info */
-    fprintf(stderr, "dps2jpgs-r" SVNVERSION " Copyright by Maksym Veremeyenko, 2009\n");
+    fprintf(stderr, PROGRAM "-r" SVNVERSION " Copyright by Maksym Veremeyenko, 2009\n");
 
     /* check if filename is given */
     if((3 != argc) && (5 != argc))
     {
-        fprintf(stderr, "dps2jpgs: ERROR! no arguments supplied!\n");
+        fprintf(stderr, PROGRAM ": ERROR! no arguments supplied!\n");
         usage();
         return 1;
     };
@@ -74,7 +76,7 @@ int main(int argc, char** argv)
     if(0 == r)
     {
         /* dump usefull info */
-        fprintf(stderr, "dps2jpgs: Frames count: %d\n", dps.frames_count);
+        fprintf(stderr, PROGRAM ": Frames count: %d\n", dps.frames_count);
 
         /* setup frames range */
         if(5 == argc)
@@ -107,7 +109,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        fprintf(stderr, "dps2jpgs: ERROR! dps_open(%s) failed with r=%d [%s]\n", argv[1], r, strerror(-r));
+        fprintf(stderr, PROGRAM ": ERROR! dps_open(%s) failed with r=%d [%s]\n", argv[1], r, strerror(-r));
         r = -r;
     };
 
