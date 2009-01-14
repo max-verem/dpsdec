@@ -100,7 +100,7 @@ static void* frames_pipe_reader(void* p)
         if(-1 != j)
         {
 #ifdef _DEBUG_
-            fprintf(stderr, PROGRAM "_m(frames_pipe_reader): START #%3d [%d]\n", i, j);
+            fprintf(stderr, PROGRAM "(frames_pipe_reader): START #%3d [%d]\n", i, j);
 #endif /* _DEBUG_ */
 
             /* read frames */
@@ -114,7 +114,7 @@ static void* frames_pipe_reader(void* p)
             desc->frames_pipe[j].is_present = CELL_JPEG_PRESENT;
 
 #ifdef _DEBUG_
-            fprintf(stderr, PROGRAM "_m(frames_pipe_reader): DONE  #%3d [%d]\n", i, j);
+            fprintf(stderr, PROGRAM "(frames_pipe_reader): DONE  #%3d [%d]\n", i, j);
 #endif /* _DEBUG_ */
 
             /* start encoding */
@@ -159,7 +159,7 @@ static void* frames_pipe_writer(void* p)
         pthread_mutex_unlock(&desc->lock);
 
 #ifdef _DEBUG_
-        fprintf(stderr, PROGRAM "_m(frames_pipe_writer): START #%d [%d]\n", i, j);
+        fprintf(stderr, PROGRAM "(frames_pipe_writer): START #%d [%d]\n", i, j);
 #endif /* _DEBUG_ */
 
         /* start writes */
@@ -188,7 +188,7 @@ static void* frames_pipe_writer(void* p)
             desc->frames_pipe[j].is_present = 0;
 
 #ifdef _DEBUG_
-            fprintf(stderr, PROGRAM "_m(frames_pipe_writer): DONE  #%d [%d]\n", i, j);
+            fprintf(stderr, PROGRAM "(frames_pipe_writer): DONE  #%d [%d]\n", i, j);
 #endif /* _DEBUG_ */
 
             /* start encoding */
@@ -240,7 +240,7 @@ static void* frames_pipe_decoder(void* p)
     };
 
 #ifdef _DEBUG_
-    fprintf(stderr, PROGRAM "_m(frames_pipe_decoder[%d]): started\n", cell->id);
+    fprintf(stderr, PROGRAM "(frames_pipe_decoder[%d]): started\n", cell->id);
 #endif /* _DEBUG_ */
 
     while(0 == desc->f_exit)
@@ -249,7 +249,7 @@ static void* frames_pipe_decoder(void* p)
         pthread_mutex_lock(&desc->lock);
 
 #ifdef _DEBUG_
-        fprintf(stderr, PROGRAM "_m(frames_pipe_decoder[%d]): pthread_cond_wait\n", cell->id);
+        fprintf(stderr, PROGRAM "(frames_pipe_decoder[%d]): pthread_cond_wait\n", cell->id);
 #endif /* _DEBUG_ */
 
         if(cell->is_present != CELL_JPEG_PRESENT)
@@ -260,7 +260,7 @@ static void* frames_pipe_decoder(void* p)
         pthread_mutex_unlock(&desc->lock);
 
 #ifdef _DEBUG_
-        fprintf(stderr, PROGRAM "_m(frames_pipe_decoder[%d]): #%d, is_present=%d\n", cell->id, cell->num, cell->is_present);
+        fprintf(stderr, PROGRAM "(frames_pipe_decoder[%d]): #%d, is_present=%d\n", cell->id, cell->num, cell->is_present);
 #endif /* _DEBUG_ */
 
         /* check for exit status */
@@ -284,7 +284,7 @@ static void* frames_pipe_decoder(void* p)
             cell->is_present |= CELL_YUV_PRESENT;
 
 #ifdef _DEBUG_
-            fprintf(stderr, PROGRAM "_m(frames_pipe_decoder[%d]): #%d, DONE\n", cell->id, cell->num);
+            fprintf(stderr, PROGRAM "(frames_pipe_decoder[%d]): #%d, DONE\n", cell->id, cell->num);
 #endif /* _DEBUG_ */
 
             /* start writer */
@@ -481,7 +481,7 @@ int main(int argc, char** argv)
             pthread_join(instance.thread_writer, &p);
 
 #ifdef _DEBUG_
-            fprintf(stderr, PROGRAM "_m(main): exiting, waiting for decoders\n");
+            fprintf(stderr, PROGRAM "(main): exiting, waiting for decoders\n");
 #endif /* _DEBUG_ */
 
             instance.f_exit = 1;
