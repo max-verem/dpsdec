@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <signal.h>
 #include "dps_io.h"
 
 #include <pthread.h>
@@ -353,6 +354,38 @@ static void usage()
 
 static struct dps2yuv_instance instance;
 
+static void sighandler (int sig)
+{
+    int i;
+
+    /* rise exit flag */
+    instance.f_exit = 1;
+
+    /* notify */
+    fprintf(stderr, "dps2yuv: Interrupts signal catched!\n");
+
+    /* lock mutex */
+    pthread_mutex_lock(&instance.lock);
+
+    /* signal */
+    pthread_cond_signal(&instance.trig_writer);
+    pthread_cond_signal(&instance.trig_reader);
+    for(i = 0; i<instance.cells_count; i++)
+        pthread_cond_signal(&instance.frames_pipe[i].trig_decoder);
+
+    /* unlock mutex */
+    pthread_mutex_unlock(&instance.lock);
+};
+
+static void signals()
+{
+    /* setup handlers */
+    signal (SIGINT, sighandler);
+    signal (SIGTERM, sighandler);
+    signal (SIGPIPE, sighandler);
+    signal (SIGHUP, sighandler);
+    signal (SIGALRM, sighandler);
+};
 
 int main(int argc, char** argv)
 {
@@ -451,6 +484,9 @@ int main(int argc, char** argv)
                 instance.frames_pipe[i].id = i;
                 instance.frames_pipe[i].parent = &instance;
             };
+
+            /* setup signals */
+            signals();
 
             /* start decoder threads */
             for(i = 0; i<instance.cells_count; i++)
